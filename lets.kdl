@@ -1,0 +1,8 @@
+description "Git manager"
+
+build "cargo build --workspace" description="Build the workspace"
+check "cargo fmt --all -- --check" description="Run cargo checks"
+test "cargo test --workspace" description="Run tests"
+lint "cargo clippy --workspace --all-targets -- -D warnings" description="Run clippy"
+fmt "cargo fmt --all" description="Format code"
+clean "cargo clean" description="Clean repo"

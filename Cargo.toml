@@ -1,0 +1,20 @@
+[package]
+name = "jetti"
+version = "0.1.0"
+edition = "2024"
+description = "A fast, cross-platform tool for organizing git repositories"
+license = "MIT"
+repository = "https://github.com/rapidity-rs/jetti"
+keywords = ["git", "repository", "cli"]
+categories = ["command-line-utilities", "development-tools"]
+
+[dependencies]
+clap = { version = "4.6.0", features = ["derive", "color"] }
+clap_complete = "4.6.0"
+dirs = "6.0.0"
+indicatif = "0.18.4"
+owo-colors = "4.3.0"
+rayon = "1.11.0"
+serde = { version = "1.0.228", features = ["derive"] }
+thiserror = "2"
+toml = "1.1.2"
