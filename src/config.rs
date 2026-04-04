@@ -29,6 +29,9 @@ pub struct Config {
     pub default_host: String,
     /// Default clone protocol (ssh or https)
     pub protocol: Protocol,
+    /// Use Jujutsu (jj) for cloning by default
+    #[serde(default)]
+    pub use_jj: bool,
     /// Known hosts and their clone URL templates
     pub hosts: Vec<HostConfig>,
 }
@@ -54,6 +57,7 @@ impl Default for Config {
                 .unwrap_or_else(|| PathBuf::from("~"))
                 .join("dev"),
             default_host: String::from("github.com"),
+            use_jj: false,
             protocol: Protocol::default(),
             hosts: vec![
                 HostConfig {

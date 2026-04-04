@@ -29,6 +29,7 @@ fn main() {
             shallow,
             https,
             ssh,
+            jj,
         } => {
             let depth = if shallow { Some(1) } else { depth };
             // Protocol precedence: inferred from URL > --https/--ssh CLI flag > config default.
@@ -40,7 +41,8 @@ fn main() {
             } else {
                 config.protocol
             };
-            cmd::get::run(&repo, depth, protocol, &config)
+            let use_jj = jj || config.use_jj;
+            cmd::get::run(&repo, depth, protocol, use_jj, &config)
         }
         Command::List { full_path, prefix } => {
             cmd::list::run(full_path, prefix.as_deref(), &config)

@@ -17,9 +17,14 @@ pub fn run(
     repo_spec: &str,
     depth: Option<u32>,
     protocol: Protocol,
+    use_jj: bool,
     config: &Config,
 ) -> crate::error::Result<()> {
-    require_git()?;
+    if use_jj {
+        require_jj()?;
+    } else {
+        require_git()?;
+    }
     let repo = Repo::parse(repo_spec, config)?;
     let dest = repo.local_path(config);
 
@@ -68,22 +73,30 @@ pub fn run(
         })?;
     }
 
-    let mut cmd = process::Command::new("git");
-    cmd.arg("clone");
-
-    if let Some(d) = depth {
-        cmd.arg("--depth").arg(d.to_string());
-    }
-
-    cmd.arg(&url).arg(&dest);
-
-    let status = cmd
-        .status()
-        .map_err(|e| JettiError::Subprocess(format!("failed to run git: {e}")))?;
+    let status = if use_jj {
+        let mut cmd = process::Command::new("jj");
+        cmd.args(["git", "clone"]);
+        if let Some(d) = depth {
+            cmd.arg("--depth").arg(d.to_string());
+        }
+        cmd.arg(&url).arg(&dest);
+        cmd.status()
+            .map_err(|e| JettiError::Subprocess(format!("failed to run jj: {e}")))?
+    } else {
+        let mut cmd = process::Command::new("git");
+        cmd.arg("clone");
+        if let Some(d) = depth {
+            cmd.arg("--depth").arg(d.to_string());
+        }
+        cmd.arg(&url).arg(&dest);
+        cmd.status()
+            .map_err(|e| JettiError::Subprocess(format!("failed to run git: {e}")))?
+    };
 
     if !status.success() {
+        let tool = if use_jj { "jj git clone" } else { "git clone" };
         return Err(JettiError::Subprocess(format!(
-            "git clone exited with {status}"
+            "{tool} exited with {status}"
         )));
     }
 
@@ -114,6 +127,27 @@ fn require_git() -> crate::error::Result<()> {
     if !status.success() {
         return Err(JettiError::Precondition(String::from(
             "git is not installed or not in PATH — jetti requires git to clone repositories",
+        )));
+    }
+
+    Ok(())
+}
+
+fn require_jj() -> crate::error::Result<()> {
+    let status = process::Command::new("jj")
+        .arg("--help")
+        .stdout(process::Stdio::null())
+        .stderr(process::Stdio::null())
+        .status()
+        .map_err(|_| {
+            JettiError::Precondition(String::from(
+                "jj is not installed or not in PATH — the --jj flag requires Jujutsu",
+            ))
+        })?;
+
+    if !status.success() {
+        return Err(JettiError::Precondition(String::from(
+            "jj is not installed or not in PATH — the --jj flag requires Jujutsu",
         )));
     }
 

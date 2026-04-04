@@ -45,6 +45,10 @@ pub enum Command {
         /// Clone using SSH instead of HTTPS
         #[arg(long, conflicts_with = "https")]
         ssh: bool,
+
+        /// Clone using Jujutsu (jj git clone) instead of git
+        #[arg(long)]
+        jj: bool,
     },
 
     /// List cloned repositories

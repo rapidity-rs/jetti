@@ -41,6 +41,7 @@ fn show(config: &Config) -> crate::error::Result<()> {
             crate::config::Protocol::Https => "https",
         }
     );
+    println!("  {} {}", "use_jj:".bold(), config.use_jj);
     println!();
     println!("  {}", "hosts:".bold());
     for host in &config.hosts {
@@ -142,6 +143,9 @@ default_host = "{default_host}"
 
 # Default clone protocol: "ssh" or "https".
 protocol = "{protocol}"
+
+# Use Jujutsu (jj git clone) instead of git clone by default.
+use_jj = false
 
 # Known hosts and their clone URL prefixes.
 # NOTE: This list *replaces* the built-in defaults — it does not extend them.
