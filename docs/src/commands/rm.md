@@ -23,7 +23,7 @@ jetti rm [OPTIONS] <REPO>
 ## Behavior
 
 - Prompts for confirmation before deleting (unless `--force`)
-- Removes the repository directory
+- Removes the repository directory only when the target is an actual git repo
 - Cleans up empty parent directories (owner, host) back to the root
 - Accepts the same specifier formats as `clone`
 

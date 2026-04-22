@@ -24,19 +24,7 @@ pub fn run(
     let dest = repo.local_path(config);
 
     if dest.exists() {
-        if !dest.join(".git").exists() {
-            // Directory exists but isn't a valid repo (e.g. partial clone failure)
-            eprintln!(
-                "{} {} exists but is not a git repository, removing and re-cloning",
-                "warning:".yellow().bold(),
-                dest.display()
-            );
-            std::fs::remove_dir_all(&dest).map_err(|e| JettiError::Io {
-                action: "remove",
-                path: dest.clone(),
-                source: e,
-            })?;
-        } else {
+        if dest.join(".git").exists() {
             eprintln!(
                 "{} {} already exists at {}",
                 "exists:".cyan().bold(),
@@ -46,6 +34,11 @@ pub fn run(
             println!("{}", dest.display());
             return Ok(());
         }
+
+        return Err(JettiError::Precondition(format!(
+            "destination already exists and is not a git repository: {}\nremove it manually before cloning",
+            dest.display()
+        )));
     }
 
     // Inferred protocol from URL takes priority, then CLI flag, then config

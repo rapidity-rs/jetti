@@ -58,7 +58,7 @@ jetti clone https://github.com/owner/repo.git
 
 - Creates the directory structure `<root>/<host>/<owner>/<repo>`
 - If the repo already exists, prints the path and exits
-- If a directory exists but isn't a valid git repo (e.g. from a failed clone), it is removed and re-cloned
+- If a non-git directory already exists at the destination, clone stops with an error instead of deleting it
 - Status messages go to stderr; only the resulting path goes to stdout
 
 ## Shell integration

@@ -8,6 +8,20 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  commits:
+    name: Conventional Commits
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Install cocogitto
+        run: cargo install cocogitto --locked
+      - name: Check commit messages
+        run: cog check --from-latest-tag --ignore-merge-commits --ignore-fixup-commits
+
   test:
     name: Test (${{ matrix.os }})
     runs-on: ${{ matrix.os }}

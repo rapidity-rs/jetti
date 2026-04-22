@@ -82,7 +82,19 @@ fn edit() -> crate::error::Result<()> {
             ))
         })?;
 
-    let status = process::Command::new(&editor)
+    let mut parts = shlex::split(&editor).ok_or_else(|| {
+        JettiError::Precondition(format!("failed to parse editor command: {editor}"))
+    })?;
+
+    let program = parts
+        .first()
+        .cloned()
+        .ok_or_else(|| JettiError::Precondition(String::from("$EDITOR is set but empty")))?;
+
+    let args = parts.split_off(1);
+
+    let status = process::Command::new(&program)
+        .args(args)
         .arg(&path)
         .status()
         .map_err(|e| JettiError::Subprocess(format!("failed to launch {editor}: {e}")))?;
@@ -126,7 +138,7 @@ fn init(_config: &Config) -> crate::error::Result<()> {
 
 fn write_default_config(path: &std::path::Path) -> crate::error::Result<()> {
     let config = Config::default();
-    let root = config.root.display();
+    let root = toml_basic_string(&config.root.to_string_lossy());
 
     // Write as a static template so we can include comments. TOML comments are
     // lost through serde roundtrip, so we build the string manually.
@@ -135,7 +147,7 @@ fn write_default_config(path: &std::path::Path) -> crate::error::Result<()> {
 # See: https://github.com/rapidity-rs/jetti
 
 # Root directory where repositories are cloned.
-root = "{root}"
+ root = {root}
 
 # Default host when only owner/repo is given (e.g. `jetti clone owner/repo`).
 default_host = "{default_host}"
@@ -183,4 +195,27 @@ https_prefix = "https://codeberg.org/"
     })?;
 
     Ok(())
+}
+
+fn toml_basic_string(value: &str) -> String {
+    let escaped = value
+        .replace('\\', "\\\\")
+        .replace('"', "\\\"")
+        .replace('\n', "\\n")
+        .replace('\r', "\\r")
+        .replace('\t', "\\t");
+    format!("\"{escaped}\"")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::toml_basic_string;
+
+    #[test]
+    fn toml_basic_string_escapes_windows_paths() {
+        assert_eq!(
+            toml_basic_string(r#"C:\Users\Taylor\dev"#),
+            "\"C:\\\\Users\\\\Taylor\\\\dev\""
+        );
+    }
 }

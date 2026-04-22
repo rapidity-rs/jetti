@@ -1,6 +1,9 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use std::sync::atomic::{AtomicUsize, Ordering};
+
+static TEST_ID: AtomicUsize = AtomicUsize::new(0);
 
 /// Create a temporary directory for tests. Returns the path.
 fn temp_dir(name: &str) -> PathBuf {
@@ -32,8 +35,14 @@ fn make_git_repo(path: &Path) {
 
 /// Run jetti with the given args, returning (exit_code, stdout, stderr).
 fn jetti(args: &[&str]) -> (i32, String, String) {
+    let id = TEST_ID.fetch_add(1, Ordering::Relaxed);
+    let config_home =
+        std::env::temp_dir().join(format!("jetti-test-config-{}-{id}", std::process::id()));
+    fs::create_dir_all(&config_home).unwrap();
+
     let output = Command::new(env!("CARGO_BIN_EXE_jetti"))
         .args(args)
+        .env("XDG_CONFIG_HOME", &config_home)
         .output()
         .expect("failed to run jetti");
     (
@@ -319,9 +328,28 @@ fn clone_recovers_from_broken_clone() {
     assert!(!repo_path.join(".git").exists());
 
     let (code, _, stderr) = jetti(&["clone", "owner/repo", "--root", dir.to_str().unwrap()]);
-    // Will fail because there's no real remote, but it should attempt the clone
-    // (not just say "already exists")
-    assert!(stderr.contains("not a git repository") || stderr.contains("cloning:") || code != 0);
+    assert_ne!(code, 0);
+    assert!(stderr.contains("destination already exists and is not a git repository"));
+    assert!(repo_path.exists());
+    cleanup(&dir);
+}
+
+#[test]
+fn rm_refuses_non_git_directory() {
+    let dir = temp_dir("rm-non-git");
+    let repo_path = dir.join("github.com/owner/repo");
+    fs::create_dir_all(&repo_path).unwrap();
+
+    let (code, _, stderr) = jetti(&[
+        "rm",
+        "owner/repo",
+        "--force",
+        "--root",
+        dir.to_str().unwrap(),
+    ]);
+    assert_ne!(code, 0);
+    assert!(stderr.contains("refusing to remove non-git directory"));
+    assert!(repo_path.exists());
     cleanup(&dir);
 }
 

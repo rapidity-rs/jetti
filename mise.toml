@@ -1,2 +1,4 @@
 [tools]
+cocogitto = "latest"
 rust = "latest"
+rust-analyzer = "latest"

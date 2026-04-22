@@ -4,7 +4,7 @@
 //! `$XDG_CONFIG_HOME/jetti/config.toml`). If the file is missing or
 //! unparseable, sensible defaults are used.
 
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
 
@@ -81,9 +81,12 @@ impl Config {
     ///
     /// Prints a warning to stderr if the file exists but cannot be read or parsed.
     pub fn load() -> Self {
-        let config_path = Self::path();
+        Self::load_from_path(&Self::path())
+    }
+
+    pub fn load_from_path(config_path: &Path) -> Self {
         if config_path.exists() {
-            match std::fs::read_to_string(&config_path) {
+            match std::fs::read_to_string(config_path) {
                 Ok(contents) => match toml::from_str(&contents) {
                     Ok(config) => return config,
                     Err(e) => {
@@ -221,9 +224,9 @@ mod tests {
 
     #[test]
     fn load_returns_default_when_no_file() {
-        // Config::load() should return defaults when the config file doesn't exist
-        // (which it shouldn't in a test environment with no prior setup)
-        let config = Config::load();
+        let path =
+            std::env::temp_dir().join(format!("jetti-config-missing-{}", std::process::id()));
+        let config = Config::load_from_path(&path);
         assert_eq!(config.default_host, "github.com");
     }
 

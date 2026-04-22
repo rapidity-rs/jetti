@@ -51,6 +51,9 @@ Repositories are cloned to `<root>/<host>/<owner>/<repo>`:
         └── repo/
 ```
 
+If the destination already exists and is not a git repository, `jetti clone`
+stops with an error instead of deleting the directory.
+
 ### List repositories
 
 ```sh
@@ -82,6 +85,8 @@ jetti status -p github.com  # filter by prefix
 jetti rm owner/repo           # prompts for confirmation
 jetti rm owner/repo --force   # skip confirmation
 ```
+
+`jetti rm` refuses to remove directories that are not git repositories.
 
 ### Configuration
 
@@ -138,6 +143,46 @@ jc() {
   cd "$(jetti clone "$@")"
 }
 ```
+
+## Release
+
+This repository uses `cocogitto` for conventional commits, version bumps, tags,
+and changelog generation.
+
+Install the release tooling:
+
+```sh
+cargo install cocogitto cargo-edit
+```
+
+Install the git hooks locally:
+
+```sh
+cog install-hook --all
+```
+
+Cut a release:
+
+```sh
+# Preview the generated changelog
+cog changelog
+
+# Create the bump commit and tag from conventional commits
+cog bump --auto
+```
+
+`cog bump` uses `cog.toml` to:
+
+- update `Cargo.toml`
+- update `CHANGELOG.md`
+- create the release commit
+- create a `v<version>` git tag
+
+After the tag is pushed, GitHub Actions builds release artifacts and publishes to
+crates.io.
+
+All new commits should follow the Conventional Commits format. CI verifies commit
+history with `cocogitto`.
 
 ## License
 

@@ -23,6 +23,13 @@ pub fn run(repo_spec: &str, force: bool, config: &Config) -> crate::error::Resul
         )));
     }
 
+    if !dest.join(".git").exists() {
+        return Err(JettiError::Precondition(format!(
+            "refusing to remove non-git directory at {}",
+            dest.display()
+        )));
+    }
+
     if !force {
         eprint!(
             "{} remove {}? [y/N] ",

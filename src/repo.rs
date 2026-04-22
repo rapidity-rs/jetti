@@ -95,9 +95,17 @@ impl Repo {
         inferred_protocol: Option<Protocol>,
     ) -> crate::error::Result<Self> {
         let path = path.trim_matches('/');
-        let (owner, name) = path.split_once('/').ok_or_else(|| {
-            JettiError::InvalidRepo(format!("expected owner/repo in path: {path}"))
-        })?;
+        let parts: Vec<&str> = path.split('/').collect();
+
+        if parts.len() != 2 || parts.iter().any(|part| part.is_empty()) {
+            return Err(JettiError::InvalidRepo(format!(
+                "expected exactly host/owner/repo or owner/repo: {host}/{path}"
+            )));
+        }
+
+        let owner = parts[0];
+        let name = parts[1];
+
         Ok(Self {
             host: host.to_string(),
             owner: owner.to_string(),
@@ -295,6 +303,16 @@ mod tests {
     #[test]
     fn parse_invalid_https_url() {
         assert!(Repo::parse("https://github.com", &test_config()).is_err());
+    }
+
+    #[test]
+    fn rejects_https_url_with_extra_segments() {
+        assert!(Repo::parse("https://github.com/owner/repo/tree/main", &test_config()).is_err());
+    }
+
+    #[test]
+    fn rejects_host_path_with_extra_segments() {
+        assert!(Repo::parse("github.com/owner/repo/extra", &test_config()).is_err());
     }
 
     #[test]
