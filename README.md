@@ -4,6 +4,20 @@ A fast, cross-platform tool for organizing git repositories into a consistent di
 
 ## Install
 
+### Homebrew
+
+```sh
+brew install rapidity-rs/tap/jetti
+```
+
+If Homebrew refuses to load the formula from a third-party tap, trust it once:
+
+```sh
+brew trust rapidity-rs/tap
+```
+
+### Cargo
+
 ```sh
 cargo install jetti
 ```
